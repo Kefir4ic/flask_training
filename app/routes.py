@@ -11,6 +11,8 @@ from app.models import User
 from app.forms import LoginForm
 from app.forms import RegistrationForm
 from app import db
+from datetime import datetime
+
 
 
 @app.route('/')
@@ -127,3 +129,13 @@ def user(username):
         {'author': user, 'body': 'Test post #2'}
     ]
     return render_template('user.html', user=user, posts=posts)
+
+
+# функция, которая записывает время последнего входа в систему пользователя
+@app.before_request
+def before_request():
+    # проверяем, зарегистрирован ли текущий пользователь
+    if current_user.is_authenticated:
+        # устанавливаем текущее время в нужное поле
+        current_user.last_seen = datetime.utcnow()
+        db.session.commit()

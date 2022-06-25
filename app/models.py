@@ -13,8 +13,12 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
+    # вместо пароля в чистом виде храним его хэш, который потом декодируется. Так безопаснее.
     password_hash = db.Column(db.String(128))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    # добавлены 2 новых поля в базе данных
+    about_me = db.Column(db.String(140))
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
     # реализация метода для добавления аватаров на сайт с помощью инструмента Gravatar
     def avatar(self, size):

@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 from app import app
 from flask import render_template, flash, redirect, url_for
-
+from flask_login import current_user, login_user
+from flask_login import logout_user
+from flask_login import login_required
+from flask import request
+from werkzeug.urls import url_parse
+from app.models import User
 from app.forms import LoginForm
+from app.forms import RegistrationForm
+from app import db
 
 
 @app.route('/')
 @app.route('/index')
+@login_required
 def index():
     user = {'username': 'Максим Тихомиров'}
     posts = [
@@ -23,16 +31,24 @@ def index():
             'body': 'Какая гадость эта ваша заливная рыба!!'
         }
     ]
-    return render_template('index.html', title='Home', user=user, posts=posts)
+    return render_template('index.html', title='Home', posts=posts)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect('/index')
     form = LoginForm()
     if form.validate_on_submit():
-        flash('Login requested for user {}, remember_me={}'.format(
-            form.username.data, form.remember_me.data))
-        return redirect('/index')
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None or not user.check_password(form.password.data):
+            flash('Invalid username or password')
+            return redirect('/login')
+        login_user(user, remember=form.remember_me.data)
+        next_page = request.args.get('next')
+        if not next_page or url_parse(next_page).netloc != '':
+            next_page = '/index'
+        return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
 
 
@@ -41,3 +57,24 @@ def say_hello():
     english_hello = "Hello, world!"
     russian_hello = "Привет, мир!"
     return render_template('say_hello.html', title='Say Hello', english_hello=english_hello, russian_hello=russian_hello)
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect('/index')
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect('/index')
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Congratulations, you are now a registered user!')
+        return redirect('/login')
+    return render_template('register.html', title='Register', form=form)

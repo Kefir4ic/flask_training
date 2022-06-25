@@ -10,13 +10,18 @@
     <body>
         <div>
             Microblog:
+            <!--Ссылка на основную страницу приложения-->
             <a href="/index">Home</a>
-        <!--проверка, вошел ли пользователь в приложение, от этого меняется кнопка перехода с login на logout-->
+            <!--проверка, вошел ли пользователь в приложение, от этого меняется кнопка перехода с login на logout-->
             {% if current_user.is_anonymous %}
+            <!--Ссылка на старницу входа в систему-->
                 <a href="/login">Login</a>
             {% else %}
+            <!--Ссылки на выход из приложения и старницу пользователя-->
+                <a href="{{ url_for('user', username=current_user.username) }}">Profile</a>
                 <a href="/logout">Logout</a>
             {% endif %}
+            <!--Ссылка на странциу с приветствиями-->
             <a href="/say_hello">Hello</a>
         </div>
         <hr>

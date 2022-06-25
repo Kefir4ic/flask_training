@@ -111,3 +111,19 @@ def register():
         return redirect('/login')
     # рендерим страницу с решистрационной формой
     return render_template('register.html', title='Register', form=form)
+
+
+# описание сссылки на страницу профиля пользователя
+@app.route('/user/<username>')
+# страница доступна только для авторизированных пользователей
+@login_required
+def user(username):
+    # загрудаем пользователя из базы данных с помощью запроса по имени пользователя
+    # метод first_or_404() работает также, как метод first(), когда есть результаты
+    # но в случае их отстуствия возвращает ошибку 404
+    user = User.query.filter_by(username=username).first_or_404()
+    posts = [
+        {'author': user, 'body': 'Test post #1'},
+        {'author': user, 'body': 'Test post #2'}
+    ]
+    return render_template('user.html', user=user, posts=posts)

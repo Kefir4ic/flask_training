@@ -148,7 +148,7 @@ def before_request():
 @login_required
 def edit_profile():
     # создает экземпляр формы
-    form = EditProfileForm()
+    form = EditProfileForm(current_user.username)
     # проверяем, нажата ли кнопка
     if form.validate_on_submit():
         current_user.username = form.username.data

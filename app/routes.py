@@ -12,6 +12,7 @@ from app.forms import LoginForm
 from app.forms import RegistrationForm
 from app import db
 from datetime import datetime
+from app.forms import EditProfileForm
 
 
 
@@ -139,3 +140,30 @@ def before_request():
         # устанавливаем текущее время в нужное поле
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
+
+
+# функция для доступа к форме редактирования пользователя
+@app.route('/edit_profile', methods=['GET', 'POST'])
+# доступ только у вошедшего пользователя
+@login_required
+def edit_profile():
+    # создает экземпляр формы
+    form = EditProfileForm()
+    # проверяем, нажата ли кнопка
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.about_me = form.about_me.data
+        db.session.commit()
+        # сохраняем изменения, выводим сообщение пользователю,
+        # возвращаем пользователя на страницу редактирования профиля
+        flash('Your changes have been saved.')
+        return redirect(url_for('edit_profile'))
+    # если метод нажатия кнопки вернул нам false,
+    # на то могут быть 2 причины:
+    # 1)браузер отправил GET запрос и нужно что-то ответить(вернуть исходную версию шаблона)
+    # 2)Браузер отправил POST запрос с данными формы, но что-то в них не так
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.about_me.data = current_user.about_me
+    return render_template('edit_profile.html', title='Edit Profile',
+                           form=form)

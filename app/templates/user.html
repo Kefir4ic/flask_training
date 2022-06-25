@@ -14,6 +14,9 @@
             </td>
         </tr>
     </table>
+    {% if user == current_user %}
+        <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
+    {% endif %}
     <hr>
     {% for post in posts %}
 <!--Использование подшаблона для вывода ссобщений пользователя-->

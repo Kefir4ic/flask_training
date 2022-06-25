@@ -11,12 +11,7 @@
     </table>
     <hr>
     {% for post in posts %}
-    <table>
-        <tr valign="top">
-<!--Добавление аватаров пользователей к каждому сообщению-->
-            <td><img src="{{ post.author.avatar(36) }}"></td>
-            <td>{{ post.author.username }} says:<br>{{ post.body }}</td>
-        </tr>
-    </table>
+<!--Использование подшаблона для вывода ссобщений пользователя-->
+        {% include '_post.html' %}
     {% endfor %}
 {% endblock %}

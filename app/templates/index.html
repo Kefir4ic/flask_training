@@ -1,7 +1,10 @@
+<!--Основная старница приложения-->
 {% extends "base.html" %}
 
 {% block content %}
+<!--приветствие пользователя, который вошел в систему-->
     <h1>Hi, {{ current_user.username  }}!</h1>
+<!--вывод всех сообщений, которые есть в блоге-->
     {% for post in posts %}
     <div><p>{{ post.author.username }} says: <b>{{ post.body }}</b></p></div>
     {% endfor %}

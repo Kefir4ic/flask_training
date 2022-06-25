@@ -1,9 +1,11 @@
+<!--страница регистрации нового пользователя-->
 {% extends "base.html" %}
 
 {% block content %}
     <h1>Register</h1>
     <form action="" method="post">
         {{ form.hidden_tag() }}
+        <!--Поле для ввода имени пользователя-->
         <p>
             {{ form.username.label }}<br>
             {{ form.username(size=32) }}<br>
@@ -11,6 +13,7 @@
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
+        <!--Поле для ввода почты пользователя-->
         <p>
             {{ form.email.label }}<br>
             {{ form.email(size=64) }}<br>
@@ -19,6 +22,7 @@
             {% endfor %}
         </p>
         <p>
+            <!--Поле для ввода пароля-->
             {{ form.password.label }}<br>
             {{ form.password(size=32) }}<br>
             {% for error in form.password.errors %}
@@ -26,12 +30,14 @@
             {% endfor %}
         </p>
         <p>
+            <!--Поле для повторного ввода пароля-->
             {{ form.password2.label }}<br>
             {{ form.password2(size=32) }}<br>
             {% for error in form.password2.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
+        <!--кнопка подтверждения заполнения поля-->
         <p>{{ form.submit() }}</p>
     </form>
 {% endblock %}

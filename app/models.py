@@ -4,6 +4,7 @@ from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import login
+from hashlib import md5
 
 
 # класс, описывающий модель Пользователь
@@ -14,6 +15,12 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+
+    # реализация метода для добавления аватаров на сайт с помощью инструмента Gravatar
+    def avatar(self, size):
+        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
+        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
+            digest, size)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)

@@ -6,6 +6,13 @@ from flask_login import UserMixin
 from app import login
 from hashlib import md5
 
+# создаем новую таблицу в бд, в которой будут храниться ассоциации подписанных пользователей
+# (id пользователя -> id на кого подписан)
+followers = db.Table('followers',
+                     db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
+                     db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
+                     )
+
 
 # класс, описывающий модель Пользователь
 class User(UserMixin, db.Model):
@@ -19,6 +26,12 @@ class User(UserMixin, db.Model):
     # добавлены 2 новых поля в базе данных
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    # обьявляем вид отношения в таблице
+    followed = db.relationship(
+        'User', secondary=followers,
+        primaryjoin=(followers.c.follower_id == id),
+        secondaryjoin=(followers.c.followed_id == id),
+        backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
 
     # реализация метода для добавления аватаров на сайт с помощью инструмента Gravatar
     def avatar(self, size):
@@ -36,6 +49,35 @@ class User(UserMixin, db.Model):
     # проверка пароля пользователя
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    # реализация метода "подписки" на другого пользователя
+    def follow(self, user):
+        # если не подписаны, то подписываемся
+        if not self.is_following(user):
+            self.followed.append(user)
+
+    # реализация метода "отписки" от пользователя
+    def unfollow(self, user):
+        # если подписаны, то отписываемся
+        if self.is_following(user):
+            self.followed.remove(user)
+
+    # проверяем, подписаны ли на пользователя
+    def is_following(self, user):
+        return self.followed.filter(
+            followers.c.followed_id == user.id).count() > 0
+
+    # возвращаем список сообщений отслеживаемых пользователей
+    def followed_posts(self):
+        # создаем временную таблицу(join) со списком всех сообщений всех отслеживаемых пользователей;
+        # сортируем временную таблицу, сохраняя в ней только записи пользователей, на которых мы подписаны
+        followed = Post.query.join(
+            followers, (followers.c.followed_id == Post.user_id)).filter(
+            followers.c.follower_id == self.id)
+        # создаем список наших постов
+        own = Post.query.filter_by(user_id=self.id)
+        # обьединяем временную таблицу сообщений и список наших постов, а потом сортируем его по времени
+        return followed.union(own).order_by(Post.timestamp.desc())
 
 
 # класс, описывающий модель Пост

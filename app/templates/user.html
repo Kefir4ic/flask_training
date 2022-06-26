@@ -10,13 +10,25 @@
                 <h1>User: {{ user.username }}</h1>
 <!--Добавление информации о пользователе на его страницу-->
                 {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
+<!--Добавление информации о последнем входе в приложение-->
                 {% if user.last_seen %}<p>Last seen on: {{ user.last_seen }}</p>{% endif %}
+<!--Вывод количества подписчиков и подписок-->
+                <p>{{ user.followers.count() }} followers, {{ user.followed.count() }} following.</p>
+<!--если мы зашли на свою страницу, то доступна возможность редактиорвания пользователя-->
+                {% if user == current_user %}
+                <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
+<!--Если не на своей странице и не подписаны на пользователя-->
+                {% elif not current_user.is_following(user) %}
+<!--Можем подписаться на пользователя-->
+                <p><a href="{{ url_for('follow', username=user.username) }}">Follow</a></p>
+<!--Если не на своей странице и подписаны на пользователя-->
+                {% else %}
+<!--Можем отписаться от пользователя-->
+                <p><a href="{{ url_for('unfollow', username=user.username) }}">Unfollow</a></p>
+                {% endif %}
             </td>
         </tr>
     </table>
-    {% if user == current_user %}
-        <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
-    {% endif %}
     <hr>
     {% for post in posts %}
 <!--Использование подшаблона для вывода ссобщений пользователя-->

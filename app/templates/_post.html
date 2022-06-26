@@ -1,7 +1,13 @@
 <!--Подшаблон, который будет использоваться для вывода ссобщений пользователей вместе с их аватарками-->
 <table>
-    <tr valign="top">
+   <tr valign="top">
         <td><img src="{{ post.author.avatar(36) }}"></td>
-        <td>{{ post.author.username }} says:<br>{{ post.body }}</td>
+        <td>
+            <!--теперь имя автора сообщения в блоге = ссылка на его странциу-->
+            <a href="{{ url_for('user', username=post.author.username) }}">
+                {{ post.author.username }}
+            </a>
+            says:<br>{{ post.body }}
+        </td>
     </tr>
 </table>

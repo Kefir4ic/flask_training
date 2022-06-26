@@ -1,44 +1,44 @@
 # основной скрипт, организующий логику переходов по страницам, а также саму логику страниц
 # -*- coding: utf-8 -*-
-from app import app
-from flask import render_template, flash, redirect, url_for
-from flask_login import current_user, login_user
-from flask_login import logout_user
-from flask_login import login_required
-from flask import request
+from app import app, db
+from flask import render_template, flash, redirect, url_for, request
+from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.models import User
-from app.forms import LoginForm
-from app.forms import RegistrationForm
-from app import db
+from app.models import User, Post
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm
 from datetime import datetime
-from app.forms import EditProfileForm
 
 
-
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 # описываем основную страницу приложения
-@app.route('/index')
+@app.route('/index', methods=['GET', 'POST'])
 # делаем страницу недоступной, для невошедших пользовтелей
 @login_required
 def index():
-    # список сообщений, которые есть в блоге. В дальнейшем будет изменено на список сообщений из бд
-    posts = [
-        {
-            'author': {'username': 'John'},
-            'body': 'Beautiful day in Portland!'
-        },
-        {
-            'author': {'username': 'Susan'},
-            'body': 'The Avengers movie was so cool!'
-        },
-        {
-            'author': {'username': 'Ипполит'},
-            'body': 'Какая гадость эта ваша заливная рыба!!'
-        }
-    ]
+    # создаем экземпляр формы для написания поста
+    form = PostForm()
+    # записываем информацию из формы в таблицу Post базы данных
+    if form.validate_on_submit():
+        post = Post(body=form.post.data, author=current_user)
+        db.session.add(post)
+        db.session.commit()
+        flash('Your post is now live!')
+        return redirect(url_for('index'))
+    # разбиваем домашнюю страницу на несколько, чтобы удобнее было просматривать большое кол-во соббщений в блоге
+    page = request.args.get('page', 1, type=int)
+    # список сообщений отслеживаемых пользователей, которые есть в блоге
+    posts = current_user.followed_posts().paginate(
+        page, app.config['POSTS_PER_PAGE'], False)
+    # создание ссылки на следующие сообщения в блоге, если они есть
+    next_url = url_for('index', page=posts.next_num) \
+        if posts.has_next else None
+    # создание ссылки на предыдущие сообщения в блоге, если они есть
+    prev_url = url_for('index', page=posts.prev_num) \
+        if posts.has_prev else None
     # рендерим страницу
-    return render_template('index.html', title='Home', posts=posts)
+    return render_template('index.html', title='Home', form=form,
+                           posts=posts.items, next_url=next_url,
+                           prev_url=prev_url)
 
 
 # описание страницы входа в систему
@@ -77,7 +77,8 @@ def login():
 def say_hello():
     english_hello = "Hello, world!"
     russian_hello = "Привет, мир!"
-    return render_template('say_hello.html', title='Say Hello', english_hello=english_hello, russian_hello=russian_hello)
+    return render_template('say_hello.html', title='Say Hello', english_hello=english_hello,
+                           russian_hello=russian_hello)
 
 
 # описание ссылки на выход пользователя из системы
@@ -125,11 +126,18 @@ def user(username):
     # метод first_or_404() работает также, как метод first(), когда есть результаты
     # но в случае их отстуствия возвращает ошибку 404
     user = User.query.filter_by(username=username).first_or_404()
-    posts = [
-        {'author': user, 'body': 'Test post #1'},
-        {'author': user, 'body': 'Test post #2'}
-    ]
-    return render_template('user.html', user=user, posts=posts)
+    page = request.args.get('page', 1, type=int)
+    # список всех постов владельца этой страницы
+    posts = user.posts.order_by(Post.timestamp.desc()).paginate(
+        page, app.config['POSTS_PER_PAGE'], False)
+    # ссылка на следующие сообщения владельца старинцы, если они есть
+    next_url = url_for('user', username=user.username, page=posts.next_num) \
+        if posts.has_next else None
+    # ссылка на предыдущие посты владельца страницы, если они есть
+    prev_url = url_for('user', username=user.username, page=posts.prev_num) \
+        if posts.has_prev else None
+    return render_template('user.html', user=user, posts=posts.items,
+                           next_url=next_url, prev_url=prev_url)
 
 
 # функция, которая записывает время последнего входа в систему пользователя
@@ -201,3 +209,22 @@ def unfollow(username):
     db.session.commit()
     flash('You are not following {}.'.format(username))
     return redirect(url_for('user', username=username))
+
+
+# функция для доступа к странице с поиском новых пользователей
+@app.route('/explore')
+@login_required
+def explore():
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page, app.config['POSTS_PER_PAGE'], False)
+    # создание ссылки на следующие сообщения в блоге, если они есть
+    next_url = url_for('index', page=posts.next_num) \
+        if posts.has_next else None
+    # создание ссылки на предыдущие сообщения в блоге, если они есть
+    prev_url = url_for('index', page=posts.prev_num) \
+        if posts.has_prev else None
+    # рендерим страницу
+    return render_template('index.html', title='Home',
+                           posts=posts.items, next_url=next_url,
+                           prev_url=prev_url)

@@ -14,6 +14,7 @@ migrate = Migrate(app, db)
 login = LoginManager(app)
 bootstrap = Bootstrap(app)
 login.login_view = 'login'
+login.login_message = "Пожалуйста, войдите."
 
 # импортируем нужные модули для приложения
 from app import routes, models, errors

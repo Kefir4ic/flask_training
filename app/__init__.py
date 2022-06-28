@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
+from flask_moment import Moment
 
 # создание экземпляра приложения
 # инициализация используемых расширений Flask
@@ -15,6 +16,7 @@ login = LoginManager(app)
 bootstrap = Bootstrap(app)
 login.login_view = 'login'
 login.login_message = "Пожалуйста, войдите."
+moment = Moment(app)
 
 # импортируем нужные модули для приложения
 from app import routes, models, errors

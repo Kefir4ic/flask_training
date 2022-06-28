@@ -11,7 +11,9 @@
 <!--Добавление информации о пользователе на его страницу-->
                 {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
 <!--Добавление информации о последнем входе в приложение-->
-                {% if user.last_seen %}<p>Last seen on: {{ user.last_seen }}</p>{% endif %}
+                {% if user.last_seen %}
+                    <p>Last seen on: {{ moment(user.last_seen).format('LLL') }}</p>
+                {% endif %}
 <!--Вывод количества подписчиков и подписок-->
                 <p>{{ user.followers.count() }} followers, {{ user.followed.count() }} following.</p>
 <!--если мы зашли на свою страницу, то доступна возможность редактиорвания пользователя-->
